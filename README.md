@@ -1,6 +1,6 @@
 # stupid-pi-providers
 
-Questionable model providers for the [pi coding agent](https://github.com/earendil-works/pi-mono).
+questionable model providers for the [pi coding agent](https://github.com/earendil-works/pi-mono) for when you're broke and can't afford an AI sub
 
 ## tiptap
 
