@@ -65,3 +65,39 @@ Set `AMI_DEBUG=/path/to/log` to append raw requests and replies to a file.
 - Only bash. Other pi tools (`read`, `edit`, `write`) aren't exposed, because Ami does everything through the shell.
 - Ami is a sales-assistant persona with its own system prompt, so it sometimes drifts back to talking about about.me plans.
 - It's someone else's support widget: it may be rate-limited, changed, or shut off at any time. Don't depend on it.
+
+## cs50
+
+Uses [CS50's duck debugger](https://cs50.ai/chat) (ddb), the AI tutor for Harvard's CS50 course, as a pi model.
+
+The chat (`POST cs50.ai/api/v1/chat`) takes an OpenAI-style message list and streams back plain text. It has no tool calling, it ignores system messages, and the duck is trained to teach rather than do the work. It won't "run commands", but it happily tells a student which command to type. So the provider:
+
+- introduces you as a CS50 student at a terminal who runs whatever single command the duck puts in a ` ```bash ` block and pastes back the output
+- turns that block into a pi `bash` tool call, and sends the output back as the next user message (cut to 8000 characters)
+- puts the instructions in the first user message, since system messages are dropped
+- splits messages over the server's 10,000-character limit into several user messages (the history itself isn't limited)
+- keeps you on the right server: sessions only exist on one backend behind the load balancer and the others answer 403, so it retries without the sticky `AWSALB` cookie until a request lands on the right one, then keeps that cookie
+
+### Usage
+
+The chat needs a logged-in cs50.ai session. Log in at https://cs50.ai/chat with GitHub, open DevTools, and copy the value of the `session` cookie for `cs50.ai`.
+
+```bash
+CS50_SESSION=<cookie> pi -e ./cs50 --model cs50/ddb
+```
+
+Or keep the cookie in a file:
+
+```bash
+CS50_SESSION_FILE=~/.cs50-session pi -e ./cs50 --model cs50/ddb
+```
+
+Set `CS50_DEBUG=/path/to/log` to append raw requests and replies to a file. `CS50_CONFIG` picks the server-side config (default `chat_cs50`; `chat_cs50_tf` makes the duck play a student instead).
+
+### Limitations
+
+- Text only. No token usage reporting. The 128k context window is a guess.
+- Only bash, one command per turn. Other pi tools (`read`, `edit`, `write`) aren't used.
+- It's a tutor: it explores, explains and asks you guiding questions, but it usually won't write the fix for you.
+- The cookie is tied to your GitHub account, and the site says conversations are logged. It expires when you log out; then you need a fresh one.
+- It's a free service for CS50 students: it may be rate-limited, changed, or shut off at any time. Don't depend on it.
